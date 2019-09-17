@@ -17,7 +17,7 @@ The following lists the group targets and descriptions for every playbook
 
 The following parameters are available/required for playbook invocation
 
-### [pool.yml](pools.yml):
+### [pools.yml](pools.yml):
 | required | variable        | description                      | default                                                         |
 | ---      | ---             | ---                              | ---                                                             |
 | *yes*    | f5_host         | f5 device to configure           | _undefined_                                                     |
@@ -30,7 +30,7 @@ The following parameters are available/required for playbook invocation
 | no       | f5_node_address | f5 address for node              | "{{ ansible_host }}"                                            |
 | no       | f5_node_pools   | f5 pools node belongs to         | []                                                              |
 
-### [pool.yml](pools.yml):
+### [virtual_servers.yml](pools.yml):
 | required | variable                 | description                        | default     |
 | ---      | ---                      | ---                                | ---         |
 | *yes*    | f5_host                  | f5 device to configure             | _undefined_ |

@@ -1,0 +1,111 @@
+---
+- name: Configure f5 node pools
+
+  hosts: f5_nodes
+
+  gather_facts: no
+
+  roles:
+
+    - nephelaiio.plugins
+
+  tasks:
+
+    - name: include variable definitions
+      include_vars: 
+        file: "{{ item }}"
+      loop:
+        - vars/common.yml
+
+    - block:
+
+        - name: install pip requirements
+          pip:
+            name:
+              - f5-sdk
+          tags:
+            - always
+
+        - name: create f5 nodes
+          bigip_node:
+            name: "{{ inventory_hostname }}"
+            address: "{{ ansible_host }}"
+            state: "{{ _f5_state }}"
+            partition: "{{ f5_partition | default('/Common') }}"
+            provider:
+              server: "{{ f5_host }}"
+              user: "{{ f5_user_name }}"
+              password: "{{ f5_user_pass }}"
+              transport: rest
+              validate_certs: "{{ _f5_validate_certs }}"
+          vars:
+            _f5_state: "{{ _f5_nodestate_dict[f5_node_state | default('poweredon')] }}"
+          when: _f5_state != 'absent'
+          delegate_facts: yes
+
+        - name: create f5 pools
+          bigip_pool:
+            name: "{{ item.name }}"
+            state: "{{ item.state | default('present') }}"
+            lb_method: "{{ item.lb_method | default('least-connections-node') }}"
+            monitors: "{{ item.monitors if 'monitors' in item else default_monitors }}"
+            partition: "{{ f5_partition | default('/Common') }}"
+            provider:
+              server: "{{ f5_host }}"
+              user: "{{ f5_user_name }}"
+              password: "{{ f5_user_pass }}"
+              transport: rest
+              validate_certs: "{{ _f5_validate_certs }}"
+          loop_control:
+            label: "{{ item.name }}"
+          loop: "{{ f5_node_pools }}"
+          when: item.state | default('enabled') != 'absent'
+          vars:
+            default_monitors:
+              - /Common/icmp
+          delegate_to: localhost
+          delegate_facts: true
+
+        - name: manage node pool memberships
+          bigip_pool_member:
+            pool: "{{ item.name }}"
+            name: "{{ inventory_hostname }}"
+            address: "{{ ansible_host }}"
+            partition: "{{ f5_partition | default('/Common') }}"
+            state: "{{ _f5_state }}"
+            port: "{{ item.port }}"
+            reuse_nodes: no
+            provider:
+              server: "{{ f5_host }}"
+              user: "{{ f5_user_name }}"
+              password: "{{ f5_user_pass }}"
+              transport: rest
+              validate_certs: "{{ _f5_validate_certs }}"
+          loop_control:
+            label: "{{ item.name }}"
+          vars:
+            _f5_state: "{{ _f5_nodestate_dict[f5_node_state | default('poweredon')] }}"
+          loop: "{{ f5_node_pools }}"
+          delegate_to: localhost
+          delegate_facts: yes
+
+        - name: delete f5 nodes
+          bigip_node:
+            name: "{{ inventory_hostname }}"
+            address: "{{ ansible_host }}"
+            state: "{{ _f5_state }}"
+            partition: "{{ f5_partition }}"
+            provider:
+              server: "{{ f5_host }}"
+              user: "{{ f5_user_name }}"
+              password: "{{ f5_user_pass }}"
+              transport: rest
+              validate_certs: "{{ _f5_validate_certs }}"
+          vars:
+            _f5_state: "{{ _f5_nodestate_dict[f5_node_state | default('poweredon')] }}"
+          when: _f5_state == 'absent'
+          delegate_to: localhost
+          delegate_facts: yes
+
+      delegate_to: localhost
+      when: f5_manage_hosts | default('yes') | bool

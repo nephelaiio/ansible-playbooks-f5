@@ -1,0 +1,5 @@
+---
+- src: nephelaiio.plugins
+  version: 1.0.15
+- src: nephelaiio.pip
+  version: 4.0.1

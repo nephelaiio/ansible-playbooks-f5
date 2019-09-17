@@ -1,0 +1,8 @@
+---
+_f5_validate_certs: "{{ f5_validate_certs | default('yes') }}"
+_f5_nodestate_dict:
+  poweredon: enabled
+  poweredoff: offline
+  absent: absent
+  present: enabled
+  shutdownguest: offline

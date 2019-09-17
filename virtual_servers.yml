@@ -1,0 +1,59 @@
+---
+- name: Configure f5 node virtual servers
+
+  hosts: f5_nodes
+
+  gather_facts: no
+
+  roles:
+
+    - nephelaiio.plugins
+
+  tasks:
+
+    - name: include variable definitions
+      include_vars: 
+        file: "{{ item }}"
+      loop:
+        - vars/common.yml
+
+    - block:
+
+        - name: install pip requirements
+          pip:
+            name:
+              - f5-sdk
+          tags:
+            - always
+
+        - name: create virtual server
+          bigip_virtual_server:
+            name: "{{ _f5_vs.name }}"
+            state: "{{ _f5_vs.state | default('present') }}"
+            type: "{{ _f5_vs.type | default('standard') }}"
+            ip_protocol: tcp
+            destination: "{{ _f5_vs.address }}"
+            port: "{{ _f5_vs.port }}"
+            pool: "{{ _f5_vs.pool }}"
+            default_persistence_profile: "{{ _f5_vs.default_persistence_profile | default('/Common/cookie') }}"
+            port_translation: yes
+            snat: "{{ _f5_vs.snat | default('automap') }}"
+            partition: "{{ f5_partition }}"
+            profiles: "{{ _f5_vs_profiles }}"
+            security_log_profiles: "{{ _f5_vs.security_log_profiles | default(omit) }}"
+            irules: "{{ _f5_vs.irules | default(omit) }}"
+            provider:
+              server: "{{ f5_host }}"
+              user: "{{ f5_user_name }}"
+              password: "{{ f5_user_pass }}"
+              transport: rest
+              validate_certs: "{{ _f5_validate_certs }}"
+          vars:
+            _f5_vs_profiles: "{{ _f5_vs.profiles | default([]) }}"
+          loop_control:
+            loop_var: _f5_vs
+            label: "{{ _f5_vs.name }}"
+          loop: "{{ f5_vss | default([]) }}"
+
+      delegate_to: localhost
+      when: f5_manage_vss | default('yes') | bool

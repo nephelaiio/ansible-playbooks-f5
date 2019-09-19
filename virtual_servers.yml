@@ -23,6 +23,7 @@
           pip:
             name:
               - f5-sdk
+              - dnspython
           tags:
             - always
 
@@ -54,6 +55,33 @@
             loop_var: _f5_vs
             label: "{{ _f5_vs.name }}"
           loop: "{{ f5_vss | default([]) }}"
+
+        - block:
+
+            - name: update virtual server dns records
+              nsupdate:
+                key_algorithm: "{{ f5_nsupdate_key_algorithm | default(omit) }}"
+                key_name: "{{ f5_nsupdate_key_name | default(omit) }}"
+                key_secret: "{{ f5_nsupdate_key_secret | default(omit) }}"
+                server: "{{ _nsrecord_ns.target }}"
+                type: A
+                zone: "{{ _nsrecord_zone }}"
+                record: "{{ _nsrecord_name }}"
+                value: "{{ _f5_vs.address }}"
+                state: "{{ 'absent' if _f5_vs.state | default('present') == 'absent' else 'present' }}" 
+              vars:
+                _f5_vs: "{{ item.0 }}"
+                _nsrecord_fqdn: "{{ item.1 }}"
+                _nsrecord_nsquery: "{{ lookup('dig', _nsrecord_zone, 'flat=0', 'qtype=NS') }}"
+                _nsrecord_ns: "{{ _nsrecord_nsquery | first }}"
+                _nsrecord_zone: "{{ _nsrecord_fqdn | split_with('.') | tail | join('.') }}"
+                _nsrecord_name: "{{ _nsrecord_fqdn | split_with('.') | head }}"
+              loop_control:
+                label: "{{ _f5_vs.name }}"
+              loop: "{{ f5_vss | default([]) | subelements('fqdns', skip_missing='yes') }}"
+
+          ignore_errors: yes
+          when: f5_nsupdate | default('no') | bool
 
       delegate_to: localhost
       when: f5_manage_vss | default('yes') | bool

@@ -8,37 +8,47 @@ Ansible playbook to configure [F5](https://f5.com)assets for an application
 
 The following lists the group targets and descriptions for every playbook
 
-| playbook | description                                                              | target   |
-| ---      | ---                                                                      | ---      |
-| app.yml  | configure pool/virtual server/irule/data group assets for an application | f5_nodes |
-|          |                                                                          |          |
+| playbook            | description                                        | target   |
+| ---                 | ---                                                | ---      |
+| pools.yml           | configure pool assets for an application           | f5_nodes |
+| virtual_servers.yml | configure virtual server assets for an application | f5_nodes |
+
+Notes:
+* virtual_servers.yml will optionally perform a nsupdate on designated fqdns with the assigned virtual ip
 
 ## Playbook variables
 
 The following parameters are available/required for playbook invocation
 
 ### [pools.yml](pools.yml):
-| required | variable        | description                      | default                                                         |
-| ---      | ---             | ---                              | ---                                                             |
-| *yes*    | f5_host         | f5 device to configure           | _undefined_                                                     |
-| *yes*    | f5_user         | f5 user for f5_device            | _undefined_                                                     |
-| *yes*    | f5_pass         | f5 pass for f5_device            | _undefined_                                                     |
-| no       | f5_partition    | f5 node/pool partition           | /Common                                                         |
-| no       | f5_manage_hosts | node management  toggle flag (*) | true                                                            |
-| no       | f5_node_state   | f5 state for node                | poweredon *(poweredon/poweredoff/absent/present/shutdownguest)* |
-| no       | f5_node_name    | f5 name for node                 | "{{ inventory_hostname }}"                                      |
-| no       | f5_node_address | f5 address for node              | "{{ ansible_host }}"                                            |
-| no       | f5_node_pools   | f5 pools node belongs to         | []                                                              |
+| required | variable        | description                  | default                                                         |
+| ---      | ---             | ---                          | ---                                                             |
+| *yes*    | f5_host         | f5 device to configure       | _undefined_                                                     |
+| *yes*    | f5_user         | f5 user for f5_device        | _undefined_                                                     |
+| *yes*    | f5_pass         | f5 pass for f5_device        | _undefined_                                                     |
+| no       | f5_partition    | f5 node/pool partition       | /Common                                                         |
+| no       | f5_manage_hosts | node management  toggle flag | true                                                            |
+| no       | f5_node_state   | f5 state for node            | poweredon *(poweredon/poweredoff/absent/present/shutdownguest)* |
+| no       | f5_node_name    | f5 name for node             | "{{ inventory_hostname }}"                                      |
+| no       | f5_node_address | f5 address for node          | "{{ ansible_host }}"                                            |
+| no       | f5_node_pools   | f5 pools node belongs to     | []                                                              |
 
 ### [virtual_servers.yml](pools.yml):
-| required | variable                 | description                        | default     |
-| ---      | ---                      | ---                                | ---         |
-| *yes*    | f5_host                  | f5 device to configure             | _undefined_ |
-| *yes*    | f5_user                  | f5 user for f5_device              | _undefined_ |
-| *yes*    | f5_pass                  | f5 pass for f5_device              | _undefined_ |
-| no       | f5_partition             | f5 virtual server partition        | /Common     |
-| no       | f5_manage_vss            | f5 vip management  toggle flag (*) | true        |
-| no       | f5_vss                   | f5 virtual servers to configure    | []          |
+| required | variable                  | description                                      | default          |
+| ---      | ---                       | ---                                              | ---              |
+| *yes*    | f5_host                   | f5 device to configure                           | _undefined_      |
+| *yes*    | f5_user                   | f5 user for f5_device                            | _undefined_      |
+| *yes*    | f5_pass                   | f5 pass for f5_device                            | _undefined_      |
+| no       | f5_partition              | f5 virtual server partition                      | /Common          |
+| no       | f5_manage_vss             | f5 vip management  toggle flag (*)               | true             |
+| no       | f5_vss                    | f5 virtual servers to configure                  | []               |
+| no       | f5_nsupdate               | Manage virtual server dns names through nsupdate | false            |
+| no       | f5_nsupdate_key_algorithm | nsupdate key algorithm                           | _undefined_      |
+| no       | f5_nsupdate_key_name      | nsupdate key name                                | _undefined_      |
+| no       | f5_nsupdate_key_secret    | nsupdate key secret                              | _undefined_      |
+| no       | f5_nsupdate_ns            | override nsupdate nameserver                     | _undefined_ (**) |
+
+(**) Performs a nslookup query for authoritative nameservers
 
 ## Data Formats
 
@@ -76,7 +86,13 @@ f5_vss:
     profiles:
       - /Common/http
       - /Common/client.example.com
+    fqdns:
+      - metabase.example.com
 ```
+
+## TODO
+
+* Add f5_pdnsupdate / f5_route53update / f5_cloudlareupdate options
 
 ## Example Invocation
 

@@ -94,7 +94,7 @@
             name: "{{ inventory_hostname }}"
             address: "{{ ansible_host }}"
             state: "{{ _f5_state }}"
-            partition: "{{ f5_partition }}"
+            partition: "{{ f5_partition | default('/Common') }}"
             provider:
               server: "{{ f5_host }}"
               user: "{{ f5_user_name }}"

@@ -36,7 +36,7 @@
             destination: "{{ _f5_vs.address }}"
             port: "{{ _f5_vs.port }}"
             pool: "{{ _f5_vs.pool }}"
-            default_persistence_profile: "{{ _f5_vs.default_persistence_profile | default('/Common/cookie') }}"
+            default_persistence_profile: "{{ _f5_vs.default_persistence_profile | default(omit) }}"
             port_translation: yes
             snat: "{{ _f5_vs.snat | default('automap') }}"
             partition: "{{ f5_partition }}"

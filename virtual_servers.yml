@@ -9,6 +9,10 @@
 
     - nephelaiio.plugins
 
+  collections:
+
+    - f5networks.f5_modules
+
   tasks:
 
     - name: include variable definitions
